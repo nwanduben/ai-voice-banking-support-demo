@@ -1,0 +1,16 @@
+# Render blueprint for the ENTIN demo page.
+#
+# The page in web/ is a single static file plus config.js. It holds no secrets:
+# the only value it carries is Ada's public ElevenLabs agent id, which the widget
+# sends from the browser anyway.
+#
+# Before deploying, set the agent id in web/config.js, then in the ElevenLabs
+# dashboard allowlist the deployed host and set the conversation caps — that, not
+# the page, is what stops a stranger spending your conversation minutes.
+services:
+  - type: web
+    name: entin-bank-demo
+    runtime: static
+    buildCommand: "echo 'static site: nothing to build'"
+    staticPublishPath: ./web
+    pullRequestPreviewsEnabled: false
