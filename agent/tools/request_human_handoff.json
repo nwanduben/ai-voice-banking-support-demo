@@ -1,0 +1,54 @@
+{
+  "type": "webhook",
+  "name": "request_human_handoff",
+  "description": "Hand the call to a human. Use when risk is HIGH, when a tool says must_escalate, or when the caller asks for a person. Summarise what you know so the caller doesn't repeat themselves. After this, use transfer_to_number.",
+  "response_timeout_secs": 10,
+  "api_schema": {
+    "url": "https://qr4v3tgj.rcld.app/webhook/entin/request_human_handoff",
+    "method": "POST",
+    "request_headers": {
+      "Authorization": {
+        "secret_id": "REPLACE_WITH_ELEVENLABS_SECRET_ID"
+      }
+    },
+    "request_body_schema": {
+      "type": "object",
+      "properties": {
+        "conversation_id": {
+          "type": "string",
+          "dynamic_variable": "system__conversation_id",
+          "description": "Conversation id (injected)"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Reason",
+          "enum": [
+            "high_risk",
+            "caller_request",
+            "verification_failed",
+            "sla_breached",
+            "out_of_scope",
+            "tool_failure"
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "description": "Intent, what was checked, references created. No secrets."
+        },
+        "caller_preference": {
+          "type": "string",
+          "description": "transfer or callback",
+          "enum": [
+            "transfer",
+            "callback"
+          ]
+        }
+      },
+      "required": [
+        "conversation_id",
+        "reason",
+        "summary"
+      ]
+    }
+  }
+}

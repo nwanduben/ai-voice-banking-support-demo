@@ -1,0 +1,285 @@
+{
+  "name": "ENTIN W1 - Post-call ingestion (HMAC + redaction)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "entin-post-call",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "name": "ElevenLabs Post-call Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "entin-post-call"
+    },
+    {
+      "parameters": {
+        "jsCode": "\n// ElevenLabs post-call webhook: header \"elevenlabs-signature: t=<unix>,v0=<hex hmac sha256 of `${t}.${rawBody}`>\"\nconst crypto = require('crypto');\nconst item = $input.first();\nconst secret = $env.ENTIN_ELEVENLABS_WEBHOOK_SECRET;\nconst header = (item.json.headers || {})['elevenlabs-signature'] || '';\nconst parts = Object.fromEntries(header.split(',').map(p => p.split('=')));\nconst raw = item.binary && item.binary.data\n  ? Buffer.from(item.binary.data.data, 'base64').toString('utf8')\n  : JSON.stringify(item.json.body);\nconst expected = crypto.createHmac('sha256', secret).update(`${parts.t}.${raw}`).digest('hex');\nconst fresh = Math.abs(Date.now() / 1000 - Number(parts.t)) < 30 * 60;\nlet valid = false;\ntry {\n  valid = fresh && !!parts.v0 && crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(parts.v0));\n} catch (e) { valid = false; }\nconst body = item.binary && item.binary.data ? JSON.parse(raw) : item.json.body;\nreturn [{ json: { valid, body } }];\n"
+      },
+      "name": "Verify HMAC Signature",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "signature-valid?",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "name": "Signature Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"ok\": false}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "name": "Reject 401",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst WORDS = '(?:pin|otp|one[\\\\s-]?time|cvv|cvc|security\\\\s+code|passcode|password|token|auth(?:entication)?\\\\s+code)';\nconst PAN = /(?<!\\d)(?:\\d[ -]?){12,18}\\d(?!\\d)/g;\nconst AFTER = new RegExp(WORDS + '\\\\W+(?:\\\\w+\\\\W+){0,3}?(\\\\d[\\\\d ]{2,9}\\\\d|\\\\d{3,8})', 'gi');\nconst BEFORE = new RegExp('(?<!\\\\d)(\\\\d{3,8})(?!\\\\d)\\\\W+(?:\\\\w+\\\\W+){0,2}?(?:is\\\\s+)?(?:my\\\\s+)?' + WORDS, 'gi');\nconst PWD = /(?:password|passcode)\\s+(?:is|na)\\s+(\\S+)/gi;\nfunction redact(text) {\n  if (!text) return { text, found: false };\n  let found = false;\n  const mark = () => { found = true; };\n  let t = text.replace(PAN, () => { mark(); return '[REDACTED_CARD]'; });\n  t = t.replace(AFTER, (m, code) => { mark(); return m.replace(code, '[REDACTED_CODE]'); });\n  t = t.replace(BEFORE, (m, code) => { mark(); return m.replace(code, '[REDACTED_CODE]'); });\n  t = t.replace(PWD, (m, pw) => { mark(); return m.replace(pw, '[REDACTED_PASSWORD]'); });\n  return { text: t, found };\n}\n\nconst body = $input.first().json.body || {};\nconst d = body.data || {};\nconst analysis = d.analysis || {};\nconst turns = (d.transcript || []).map(t => `${t.role}: ${t.message || ''}`);\nconst r = redact(turns.join('\\n'));\nconst evals = analysis.evaluation_criteria_results || {};\nconst failed = Object.entries(evals).filter(([k, v]) => v && v.result === 'failure').map(([k]) => k);\nconst dc = analysis.data_collection_results || {};\nconst val = k => (dc[k] && dc[k].value !== undefined) ? dc[k].value : null;\nreturn [{ json: {\n  conversation_id: d.conversation_id,\n  agent_id: d.agent_id,\n  call_successful: analysis.call_successful,\n  summary: redact(analysis.transcript_summary || '').text,\n  transcript_redacted: r.text,\n  secret_detected: r.found,\n  failed_evaluations: failed,\n  primary_intent: val('primary_intent'),\n  max_risk: val('max_risk'),\n  references_created: val('references_created'),\n  needs_qa_alert: r.found || failed.length > 0,\n} }];\n"
+      },
+      "name": "Redact & Extract Outcome",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.ENTIN_API_BASE }}/v1/sessions/{{ $json.conversation_id }}/outcome",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 10000
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ call_successful: $json.call_successful, summary: $json.summary, secret_detected: $json.secret_detected, failed_evaluations: $json.failed_evaluations, primary_intent: $json.primary_intent, max_risk: $json.max_risk }) }}"
+      },
+      "name": "Store Outcome in ENTIN API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        200
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE",
+          "name": "ENTIN API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"ok\": true}",
+        "options": {}
+      },
+      "name": "Respond 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1100,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "needs-qa-alert?",
+              "leftValue": "={{ $('Redact & Extract Outcome').item.json.needs_qa_alert }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "name": "Needs QA Alert?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1320,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "entin-demo@example.com",
+        "toEmail": "={{ $env.ENTIN_ALERT_EMAIL }}",
+        "subject": "=ENTIN QA alert: {{ $('Redact & Extract Outcome').item.json.conversation_id }}",
+        "emailFormat": "text",
+        "text": "=Secret detected: {{ $('Redact & Extract Outcome').item.json.secret_detected }}\nFailed evaluations: {{ $('Redact & Extract Outcome').item.json.failed_evaluations.join(', ') || 'none' }}\nIntent: {{ $('Redact & Extract Outcome').item.json.primary_intent }}\nSummary (redacted): {{ $('Redact & Extract Outcome').item.json.summary }}",
+        "options": {}
+      },
+      "name": "Email QA Alert",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1540,
+        120
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "REPLACE",
+          "name": "ENTIN SMTP"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "ElevenLabs Post-call Webhook": {
+      "main": [
+        [
+          {
+            "node": "Verify HMAC Signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify HMAC Signature": {
+      "main": [
+        [
+          {
+            "node": "Signature Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Signature Valid?": {
+      "main": [
+        [
+          {
+            "node": "Redact & Extract Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reject 401",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redact & Extract Outcome": {
+      "main": [
+        [
+          {
+            "node": "Store Outcome in ENTIN API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Outcome in ENTIN API": {
+      "main": [
+        [
+          {
+            "node": "Respond 200",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond 200": {
+      "main": [
+        [
+          {
+            "node": "Needs QA Alert?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs QA Alert?": {
+      "main": [
+        [
+          {
+            "node": "Email QA Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

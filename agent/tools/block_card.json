@@ -1,0 +1,51 @@
+{
+  "type": "webhook",
+  "name": "block_card",
+  "description": "Block a lost, stolen or compromised card. First confirm verbally: 'Shall I block the card ending X? It can't be used again.' Set all_cards true only if the caller asks to block every card.",
+  "response_timeout_secs": 10,
+  "api_schema": {
+    "url": "https://qr4v3tgj.rcld.app/webhook/entin/block_card",
+    "method": "POST",
+    "request_headers": {
+      "Authorization": {
+        "secret_id": "REPLACE_WITH_ELEVENLABS_SECRET_ID"
+      }
+    },
+    "request_body_schema": {
+      "type": "object",
+      "properties": {
+        "conversation_id": {
+          "type": "string",
+          "dynamic_variable": "system__conversation_id",
+          "description": "Conversation id (injected)"
+        },
+        "card_last4": {
+          "type": "string",
+          "description": "Last 4 digits of the card"
+        },
+        "all_cards": {
+          "type": "boolean",
+          "description": "Block every active card on the profile"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Reason",
+          "enum": [
+            "lost",
+            "stolen",
+            "suspected_fraud"
+          ]
+        },
+        "caller_confirmed": {
+          "type": "boolean",
+          "description": "True only after the caller clearly said yes"
+        }
+      },
+      "required": [
+        "conversation_id",
+        "reason",
+        "caller_confirmed"
+      ]
+    }
+  }
+}

@@ -1,0 +1,26 @@
+scenario,full_name,date_of_birth,account_last4,phone_last4,what_to_say
+"S01 transfer debited, recipient not credited (within 72h)",Adaeze Okafor,1991-03-14,8698,0001,"I sent 45,000 naira yesterday but my sister hasn't received it."
+"S02 transfer failed, not debited",Tunde Bakare,1988-07-02,5364,0002,"My transfer failed, did I lose money?"
+S03 reversal completed; has open ticket TKT-104233,Chinedu Eze,1985-11-23,9405,0003,"I'm checking if my 30,000 naira reversal has come back."
+S04 reversal overdue; ticket TKT-104250 past SLA,Halima Yusuf,1993-01-30,8469,0004,My reversal still hasn't come after days!
+S05 transfer pending 20 minutes,Emeka Nwosu,1990-05-09,2731,0005,"I just sent 15,000 naira and it's showing pending."
+"S06 ATM (other bank) debited, no cash",Funke Adeyemi,1987-09-17,6344,0006,"The ATM didn't give me cash but I was debited 20,000."
+S07 POS double debit,Ibrahim Musa,1992-12-01,6804,0007,I was charged twice at a POS.
+S08 card declined: insufficient funds,Ngozi Obi,1995-04-21,5136,0008,Why was my card declined?
+S09 card declined: online payments off,Segun Ade,1989-08-08,9084,0009,My card won't work online.
+S10 card on fraud hold,Aisha Bello,1994-02-11,9298,0010,Why was my card declined?
+S11 lost card,Kelechi Umeh,1986-06-19,1610,0011,I lost my card.
+S12 three unrecognised web debits at 2am,Ronke Adebayo,1983-10-05,7992,0012,There are three payments at 2am I didn't make.
+"S13 new phone, device not linked",Uche Okonkwo,1996-03-03,3208,0013,I can't log in on my new phone.
+S14 mobile profile locked,Grace Etim,1990-12-25,4686,0014,My app says my profile is locked.
+S16 OTP blocked by DND,Musa Danjuma,1984-07-15,1621,0016,I'm not getting my OTP.
+S18 volunteers PIN,Femi Ogun,1982-01-27,0604,0018,Let me give you my PIN so you can check... it's 4 4 2 1.
+"S19 scammed, shared OTP, N80,000 left",Joy Nnaji,1997-05-30,1291,0019,"Someone from the bank asked for my OTP and now 80,000 naira is gone."
+S20 account restricted,Tope Salami,1981-09-09,6663,0020,Why is my account restricted?
+"S24 N2,500,000 transfer not received",Daniel Okoro,1979-04-04,1126,0024,I sent 2.5 million naira and it hasn't arrived.
+S25 wants a human,Kemi Oladipo,1992-10-10,2630,0025,I want to speak to a human.
+"S31 no reference, several similar transfers",Obinna Chukwu,1991-08-18,1838,0031,"I don't know the transaction reference, I sent some money this week."
+"S32 does not recognise N150,000",Zainab Lawal,1993-06-06,8982,0032,"I don't recognise this 150,000 naira transaction."
+S34 block every card (3 cards),Bayo Ogunleye,1980-02-29,7918,0034,Block every card on my account.
+S36 reported the same issue three times,Amaka Nwachukwu,1988-12-12,8043,0036,I've already reported this three times! Ticket T K T 1 0 4 3 0 2.
+"S37 DEMO: N70,000 deducted yesterday ~4pm, doesn't know why",Gerald Okeke,1990-06-15,0159,0037,"Good morning, my name is Gerald. 70,000 naira was deducted from my account yesterday and I don't understand why."

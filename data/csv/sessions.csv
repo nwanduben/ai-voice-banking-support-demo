@@ -1,0 +1,1 @@
+conversation_id,customer_id,customer_name,tier,verified_at,failed_attempts,locked,max_risk,intents,updated_at,call_summary,secret_detected,failed_evaluations

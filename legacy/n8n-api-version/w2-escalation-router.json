@@ -1,0 +1,321 @@
+{
+  "name": "ENTIN W2 - Escalation & security event router",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "name": "Every Minute",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.ENTIN_API_BASE }}/v1/events",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "name": "Fetch ENTIN Events",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE",
+          "name": "ENTIN API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "events",
+        "options": {}
+      },
+      "name": "Split Events",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const e = $json; return { json: { id: e.id, type: e.type, created_at: e.created_at, ...JSON.parse(e.payload) } };"
+      },
+      "name": "Parse Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "Human Queue-handoff_created",
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "handoff_created",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  },
+                  {
+                    "id": "Human Queue-sla_breached",
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "sla_breached",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "or"
+              },
+              "renameOutput": true,
+              "outputKey": "Human Queue"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "Fraud Queue-card_blocked",
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "card_blocked",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  },
+                  {
+                    "id": "Fraud Queue-security_case_opened",
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "security_case_opened",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "or"
+              },
+              "renameOutput": true,
+              "outputKey": "Fraud Queue"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "Tickets-ticket_created",
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "ticket_created",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  },
+                  {
+                    "id": "Tickets-dispute_created",
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "dispute_created",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "or"
+              },
+              "renameOutput": true,
+              "outputKey": "Tickets"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "none"
+        }
+      },
+      "name": "Route by Event Type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "entin-demo@example.com",
+        "toEmail": "={{ $env.ENTIN_ALERT_EMAIL }}",
+        "subject": "=[{{ $json.priority || 'P2' }}] ENTIN {{ $json.type }} - {{ $json.queue || $json.ticket_id }}",
+        "emailFormat": "text",
+        "text": "=Conversation: {{ $json.conversation_id }}\nQueue: {{ $json.queue }}\nRisk: {{ $json.risk_level }}\nHandoff/Ticket: {{ $json.handoff_id || $json.ticket_id }}\nSummary (redacted): {{ $json.summary }}\n\nSynthetic demo data only.",
+        "options": {}
+      },
+      "name": "Notify Human Queue",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1120,
+        160
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "REPLACE",
+          "name": "ENTIN SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "entin-demo@example.com",
+        "toEmail": "={{ $env.ENTIN_ALERT_EMAIL }}",
+        "subject": "=[P1] ENTIN {{ $json.type }} - {{ $json.case_id || $json.block_ref }}",
+        "emailFormat": "text",
+        "text": "=Conversation: {{ $json.conversation_id }}\nEvent: {{ $json.type }}\nCase: {{ $json.case_id }}\nCards blocked: {{ ($json.cards || []).join(', ') }}\nSecret kind (never the value): {{ $json.secret_kind }}\n\nCustomer SMS is simulated in notification_outbox; nothing is sent to real people.",
+        "options": {}
+      },
+      "name": "Notify Fraud Team",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1120,
+        320
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "REPLACE",
+          "name": "ENTIN SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "name": "Log Ticket Event",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        480
+      ]
+    }
+  ],
+  "connections": {
+    "Every Minute": {
+      "main": [
+        [
+          {
+            "node": "Fetch ENTIN Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch ENTIN Events": {
+      "main": [
+        [
+          {
+            "node": "Split Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Events": {
+      "main": [
+        [
+          {
+            "node": "Parse Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Payload": {
+      "main": [
+        [
+          {
+            "node": "Route by Event Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Event Type": {
+      "main": [
+        [
+          {
+            "node": "Notify Human Queue",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify Fraud Team",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Ticket Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

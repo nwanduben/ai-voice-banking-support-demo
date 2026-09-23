@@ -1,0 +1,6 @@
+ticket_id,customer_id,category,linked_txn_id,status,priority,created_at,sla_due,summary,created_by
+TKT-104233,CUS-0003,COMPLAINT_GENERAL,,in_progress,P3,2026-09-16 13:26,2026-09-30 13:26,Statement request delayed,seed
+TKT-104250,CUS-0004,REVERSAL_STATUS,TXN-S04,in_progress,P2,2026-09-06 13:26,2026-09-20 13:26,Reversal not received,seed
+TKT-104300,CUS-0036,TRANSFER_DEBITED_NOT_RECEIVED,TXN-S36,open,P3,2026-09-16 13:26,2026-10-03 13:26,Transfer not received,seed
+TKT-104301,CUS-0036,TRANSFER_DEBITED_NOT_RECEIVED,TXN-S36,open,P3,2026-09-18 13:26,2026-10-03 13:26,Transfer not received,seed
+TKT-104302,CUS-0036,TRANSFER_DEBITED_NOT_RECEIVED,TXN-S36,open,P3,2026-09-20 13:26,2026-10-03 13:26,Transfer not received,seed

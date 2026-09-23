@@ -1,0 +1,28 @@
+{
+  "type": "webhook",
+  "name": "get_digital_access_status",
+  "description": "Check mobile/internet banking access: locked profile, new-device binding, OTP delivery problems. Never ask for or read any code.",
+  "response_timeout_secs": 10,
+  "api_schema": {
+    "url": "https://qr4v3tgj.rcld.app/webhook/entin/get_digital_access_status",
+    "method": "POST",
+    "request_headers": {
+      "Authorization": {
+        "secret_id": "REPLACE_WITH_ELEVENLABS_SECRET_ID"
+      }
+    },
+    "request_body_schema": {
+      "type": "object",
+      "properties": {
+        "conversation_id": {
+          "type": "string",
+          "dynamic_variable": "system__conversation_id",
+          "description": "Conversation id (injected)"
+        }
+      },
+      "required": [
+        "conversation_id"
+      ]
+    }
+  }
+}

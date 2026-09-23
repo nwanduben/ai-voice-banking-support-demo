@@ -1,0 +1,64 @@
+tab,id_column,id,field,offset_minutes,value,note
+Cards,card_id,CRD-0008-1,last_decline_at,240,,S08 decline time
+Cards,card_id,CRD-0009-1,last_decline_at,360,,S09 decline time
+Cards,card_id,CRD-0010-1,last_decline_at,120,,S10 decline time
+Cards,card_id,CRD-0001-1,status,,active,reset card status
+Cards,card_id,CRD-0002-1,status,,active,reset card status
+Cards,card_id,CRD-0003-1,status,,active,reset card status
+Cards,card_id,CRD-0004-1,status,,active,reset card status
+Cards,card_id,CRD-0005-1,status,,active,reset card status
+Cards,card_id,CRD-0006-1,status,,active,reset card status
+Cards,card_id,CRD-0007-1,status,,active,reset card status
+Cards,card_id,CRD-0008-1,status,,active,reset card status
+Cards,card_id,CRD-0009-1,status,,active,reset card status
+Cards,card_id,CRD-0010-1,status,,blocked_fraud,reset card status
+Cards,card_id,CRD-0011-1,status,,active,reset card status
+Cards,card_id,CRD-0012-1,status,,active,reset card status
+Cards,card_id,CRD-0013-1,status,,active,reset card status
+Cards,card_id,CRD-0014-1,status,,active,reset card status
+Cards,card_id,CRD-0016-1,status,,active,reset card status
+Cards,card_id,CRD-0018-1,status,,active,reset card status
+Cards,card_id,CRD-0019-1,status,,active,reset card status
+Cards,card_id,CRD-0020-1,status,,active,reset card status
+Cards,card_id,CRD-0024-1,status,,active,reset card status
+Cards,card_id,CRD-0025-1,status,,active,reset card status
+Cards,card_id,CRD-0031-1,status,,active,reset card status
+Cards,card_id,CRD-0032-1,status,,active,reset card status
+Cards,card_id,CRD-0034-1,status,,active,reset card status
+Cards,card_id,CRD-0034-2,status,,active,reset card status
+Cards,card_id,CRD-0034-3,status,,active,reset card status
+Cards,card_id,CRD-0036-1,status,,active,reset card status
+Cards,card_id,CRD-0037-1,status,,active,reset card status
+Digital Access,customer_id,CUS-0016,otp_last_attempt,12,,S16 OTP attempt
+Transactions,txn_id,TXN-S01,date_time,1200,,TXN-S01 time
+Transactions,txn_id,TXN-S02,date_time,180,,TXN-S02 time
+Transactions,txn_id,TXN-S03,date_time,5760,,TXN-S03 time
+Transactions,txn_id,TXN-S03,reversal_completed_at,2880,,
+Transactions,txn_id,TXN-S04,date_time,7200,,TXN-S04 time
+Transactions,txn_id,TXN-S04,reversal_due,2880,,
+Transactions,txn_id,TXN-S05,date_time,20,,TXN-S05 time
+Transactions,txn_id,TXN-S06,date_time,1800,,TXN-S06 time
+Transactions,txn_id,TXN-S07A,date_time,1560,,TXN-S07A time
+Transactions,txn_id,TXN-S07B,date_time,1559,,TXN-S07B time
+Transactions,txn_id,TXN-S12A,date_time,540,,TXN-S12A time
+Transactions,txn_id,TXN-S12B,date_time,536,,TXN-S12B time
+Transactions,txn_id,TXN-S12C,date_time,532,,TXN-S12C time
+Transactions,txn_id,TXN-S19,date_time,300,,TXN-S19 time
+Transactions,txn_id,TXN-S24,date_time,1560,,TXN-S24 time
+Transactions,txn_id,TXN-S31A,date_time,1440,,TXN-S31A time
+Transactions,txn_id,TXN-S31B,date_time,2940,,TXN-S31B time
+Transactions,txn_id,TXN-S31C,date_time,3000,,TXN-S31C time
+Transactions,txn_id,TXN-S31D,date_time,4500,,TXN-S31D time
+Transactions,txn_id,TXN-S32,date_time,2880,,TXN-S32 time
+Transactions,txn_id,TXN-S36,date_time,8640,,TXN-S36 time
+Transactions,txn_id,TXN-S37,date_time,1281,,TXN-S37 time
+Tickets,ticket_id,TKT-104233,created_at,7200,,
+Tickets,ticket_id,TKT-104233,sla_due,-12960,,
+Tickets,ticket_id,TKT-104250,created_at,21600,,
+Tickets,ticket_id,TKT-104250,sla_due,1440,,
+Tickets,ticket_id,TKT-104300,created_at,7200,,
+Tickets,ticket_id,TKT-104300,sla_due,-17280,,
+Tickets,ticket_id,TKT-104301,created_at,4320,,
+Tickets,ticket_id,TKT-104301,sla_due,-17280,,
+Tickets,ticket_id,TKT-104302,created_at,1440,,
+Tickets,ticket_id,TKT-104302,sla_due,-17280,,

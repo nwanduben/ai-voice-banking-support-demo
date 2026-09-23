@@ -1,0 +1,46 @@
+{
+  "type": "webhook",
+  "name": "find_branch_or_atm",
+  "description": "Find an ENTIN branch or ATM by city and area. No verification needed.",
+  "response_timeout_secs": 10,
+  "api_schema": {
+    "url": "https://qr4v3tgj.rcld.app/webhook/entin/find_branch_or_atm",
+    "method": "POST",
+    "request_headers": {
+      "Authorization": {
+        "secret_id": "REPLACE_WITH_ELEVENLABS_SECRET_ID"
+      }
+    },
+    "request_body_schema": {
+      "type": "object",
+      "properties": {
+        "conversation_id": {
+          "type": "string",
+          "dynamic_variable": "system__conversation_id",
+          "description": "Conversation id (injected)"
+        },
+        "city": {
+          "type": "string",
+          "description": "City, e.g. Lagos, Abuja, Port Harcourt, Kano, Enugu"
+        },
+        "area": {
+          "type": "string",
+          "description": "Area or neighbourhood, e.g. Ikeja"
+        },
+        "type": {
+          "type": "string",
+          "description": "branch, atm or any",
+          "enum": [
+            "branch",
+            "atm",
+            "any"
+          ]
+        }
+      },
+      "required": [
+        "conversation_id",
+        "city"
+      ]
+    }
+  }
+}

@@ -1,0 +1,17 @@
+location_id,type,name,city,area,address,hours,status
+BR-LAG-01,branch,ENTIN Ikeja Branch,Lagos,Ikeja,"12 Demo Avenue, Ikeja",Mon-Fri 8am-4pm,open
+BR-LAG-02,branch,ENTIN Lekki Branch,Lagos,Lekki,"5 Sample Road, Lekki Phase 1","Mon-Fri 8am-4pm, Sat 10am-2pm",open
+BR-LAG-03,branch,ENTIN Yaba Branch,Lagos,Yaba,"22 Placeholder Street, Yaba",Mon-Fri 8am-4pm,open
+BR-ABJ-01,branch,ENTIN Wuse II Branch,Abuja,Wuse,"20 Fictional Crescent, Wuse II",Mon-Fri 8am-4pm,open
+BR-ABJ-02,branch,ENTIN Garki Branch,Abuja,Garki,"7 Demo Close, Area 11, Garki",Mon-Fri 8am-4pm,open
+BR-PHC-01,branch,ENTIN GRA Branch,Port Harcourt,GRA,"9 Placeholder Street, GRA Phase 2",Mon-Fri 8am-4pm,open
+BR-IBD-01,branch,ENTIN Ring Road Branch,Ibadan,Ring Road,"4 Sample Way, Ring Road",Mon-Fri 8am-4pm,open
+BR-KAN-01,branch,ENTIN Kano Main,Kano,Nasarawa,"3 Demo Road, Nasarawa GRA",Mon-Fri 8am-4pm,open
+BR-ENU-01,branch,ENTIN Enugu Branch,Enugu,Independence Layout,"14 Sample Close, Independence Layout",Mon-Fri 8am-4pm,open
+BR-KAD-01,branch,ENTIN Kaduna Branch,Kaduna,Barnawa,"11 Fictional Road, Barnawa",Mon-Fri 8am-4pm,open
+BR-BEN-01,branch,ENTIN Benin Branch,Benin City,GRA,"2 Demo Avenue, GRA",Mon-Fri 8am-4pm,open
+ATM-LAG-014,atm,ENTIN ATM Ikeja City Mall (fictional),Lagos,Ikeja,"Ikeja, near Demo Mall",24 hours,working
+ATM-LAG-022,atm,ENTIN ATM Yaba,Lagos,Yaba,Herbert Macaulay Way (fictional unit),24 hours,out_of_service
+ATM-LAG-031,atm,ENTIN ATM Lekki Phase 1,Lagos,Lekki,Admiralty Way (fictional unit),24 hours,working
+ATM-ABJ-003,atm,ENTIN ATM Garki,Abuja,Garki,Area 11 (fictional unit),24 hours,working
+ATM-PHC-002,atm,ENTIN ATM Trans-Amadi,Port Harcourt,Trans-Amadi,Trans-Amadi (fictional unit),24 hours,working

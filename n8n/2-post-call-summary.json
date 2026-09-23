@@ -1,0 +1,350 @@
+{
+  "name": "ENTIN 2 - Post-call summary",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "entin-post-call",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "name": "ElevenLabs Post-call Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "entin-post-call"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ElevenLabs signs each post-call webhook: header \"elevenlabs-signature: t=<unix>,v0=<hex HMAC-SHA256 of `${t}.${rawBody}`>\".\n// This node rebuilds the exact signed text; the next (Crypto) node computes the HMAC with your ElevenLabs secret.\nconst item = $input.first();\nconst header = (item.json.headers || {})['elevenlabs-signature'] || '';\nconst parts = Object.fromEntries(header.split(',').map((p) => p.split('=')));\nconst raw = item.binary && item.binary.data ? Buffer.from(item.binary.data.data, 'base64').toString('utf8') : JSON.stringify(item.json.body || {});\nreturn [{ json: { t: parts.t || '', v0: parts.v0 || '', signed_payload: `${parts.t}.${raw}`, raw } }];\n"
+      },
+      "name": "Prepare Signature Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "action": "hmac",
+        "type": "SHA256",
+        "value": "={{ $json.signed_payload }}",
+        "dataPropertyName": "expected",
+        "secret": "PASTE_ELEVENLABS_WEBHOOK_SECRET_HERE",
+        "encoding": "hex"
+      },
+      "name": "HMAC with ElevenLabs Secret",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 1,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const x = $input.first().json;\nconst fresh = Math.abs(Date.now() / 1000 - Number(x.t)) < 30 * 60;\nconst valid = !!x.v0 && fresh && String(x.expected || '').toLowerCase() === String(x.v0).toLowerCase();\nlet body = null;\nif (valid) { try { body = JSON.parse(x.raw); } catch (e) { body = null; } }\nreturn [{ json: { valid: valid && !!body, body } }];\n"
+      },
+      "name": "Check Signature",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "signature-valid",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "name": "Signature Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"ok\": false}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "name": "Reject 401",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1100,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Redact the transcript and turn ElevenLabs' post-call analysis into a Sessions row update.\nconst WORDS = '(?:pin|otp|one[\\\\s-]?time|cvv|cvc|security\\\\s+code|passcode|password|token|auth(?:entication)?\\\\s+code)';\nconst PAN = /(?<!\\d)(?:\\d[ -]?){12,18}\\d(?!\\d)/g;\nconst AFTER = new RegExp(WORDS + '\\\\W+(?:\\\\w+\\\\W+){0,3}?(\\\\d[\\\\d ]{2,9}\\\\d|\\\\d{3,8})', 'gi');\nconst BEFORE = new RegExp('(?<!\\\\d)(\\\\d{3,8})(?!\\\\d)\\\\W+(?:\\\\w+\\\\W+){0,2}?(?:is\\\\s+)?(?:my\\\\s+)?' + WORDS, 'gi');\nconst PWD = /(?:password|passcode)\\s+(?:is|na)\\s+(\\S+)/gi;\nlet found = false;\nconst redact = (t) => String(t || '')\n  .replace(PAN, () => { found = true; return '[REDACTED_CARD]'; })\n  .replace(AFTER, (m, code) => { found = true; return m.replace(code, '[REDACTED_CODE]'); })\n  .replace(BEFORE, (m, code) => { found = true; return m.replace(code, '[REDACTED_CODE]'); })\n  .replace(PWD, (m, pw) => { found = true; return m.replace(pw, '[REDACTED_PASSWORD]'); });\nconst d = ($input.first().json.body || {}).data || {};\nconst a = d.analysis || {};\n(d.transcript || []).forEach((t) => redact(t.message)); // detection only; the transcript itself is not stored\nconst summary = redact(a.transcript_summary);\nconst failed = Object.entries(a.evaluation_criteria_results || {}).filter(([, v]) => v && v.result === 'failure').map(([k]) => k);\nreturn [{ json: { conversation_id: d.conversation_id, call_summary: summary.slice(0, 1000), secret_detected: found ? 'yes' : 'no',\n  failed_evaluations: failed.join(', '), needs_qa_alert: found || failed.length > 0 } }];\n"
+      },
+      "name": "Redact & Summarise",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1Dr7c9_2wfoYQNxc67Vus-Rg7iNERS8rhC065zd7p30Q/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Sessions"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "conversation_id"
+          ],
+          "schema": []
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "name": "Save Call Summary",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1320,
+        200
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"ok\": true}",
+        "options": {}
+      },
+      "name": "Respond 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1540,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "needs-qa-alert",
+              "leftValue": "={{ $('Redact & Summarise').first().json.needs_qa_alert }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "name": "Needs QA Alert?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1760,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "ENTIN Bank Operations <nwanduben@gmail.com>",
+        "toEmail": "nwanduben@gmail.com",
+        "subject": "=[Quality review] ENTIN call {{ $json.conversation_id }}",
+        "options": {
+          "appendAttribution": false
+        },
+        "emailFormat": "html",
+        "html": "=<!DOCTYPE html>\n<html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>ENTIN Bank</title></head>\n<body style=\"margin:0;padding:0;background:#eef1f5;\">\n<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#eef1f5;padding:24px 12px;\">\n<tr><td align=\"center\">\n<table role=\"presentation\" width=\"600\" cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:600px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden;font-family:Helvetica,Arial,sans-serif;color:#1d2939;\">\n  <!-- header / logo -->\n  <tr><td style=\"background:#0b2e59;padding:20px 28px;\">\n    <table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\"><tr>\n      <td style=\"width:40px;height:40px;background:#c9a227;border-radius:8px;text-align:center;vertical-align:middle;font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:bold;color:#0b2e59;\">E</td>\n      <td style=\"padding-left:12px;vertical-align:middle;\">\n        <div style=\"font-family:Georgia,'Times New Roman',serif;font-size:21px;font-weight:bold;letter-spacing:3px;color:#ffffff;\">ENTIN&nbsp;BANK</div>\n        <div style=\"font-size:11px;letter-spacing:1.5px;color:#c9d6e8;text-transform:uppercase;\">Quality Assurance &middot; Call review</div>\n      </td>\n    </tr></table>\n  </td></tr>\n  <tr><td style=\"height:4px;background:#c9a227;font-size:0;line-height:0;\">&nbsp;</td></tr>\n  <tr><td style=\"padding:28px 28px 8px;\">\n    <span style=\"display:inline-block;background:{{ $json.secret_detected === 'yes' ? '#b42318' : '#b54708' }};color:#ffffff;font-size:12px;font-weight:bold;letter-spacing:1px;padding:5px 10px;border-radius:4px;\">QUALITY REVIEW NEEDED</span>\n    <h1 style=\"margin:14px 0 6px;font-size:22px;line-height:28px;color:#0b2e59;\">A call needs a quality check</h1>\n    <p style=\"margin:0;font-size:14px;line-height:22px;color:#475467;\">This call finished with something our quality team should review.</p>\n  </td></tr>\n  <tr><td style=\"padding:16px 28px 4px;\">\n    <table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"border:1px solid #e4e7ec;border-radius:8px;font-size:14px;\">\n      <tr><td style=\"padding:10px 14px;width:170px;color:#667085;border-bottom:1px solid #e4e7ec;\">Secret spoken on call</td><td style=\"padding:10px 14px;border-bottom:1px solid #e4e7ec;\"><b>{{ $json.secret_detected === 'yes' ? 'Yes, masked before saving' : 'No' }}</b></td></tr>\n      <tr><td style=\"padding:10px 14px;color:#667085;\">Checks that failed</td><td style=\"padding:10px 14px;\">{{ $json.failed_evaluations || 'None' }}</td></tr>\n    </table>\n  </td></tr>\n  <tr><td style=\"padding:16px 28px 28px;\">\n    <div style=\"font-size:12px;font-weight:bold;letter-spacing:1px;color:#667085;text-transform:uppercase;margin-bottom:6px;\">Call summary (redacted)</div>\n    <div style=\"background:#f4f7fb;border-left:4px solid #0b2e59;border-radius:4px;padding:12px 14px;font-size:14px;line-height:22px;\">{{ String($json.call_summary || 'No summary provided.').replace(/</g, '&lt;') }}</div>\n    <p style=\"margin:18px 0 0;\"><a href=\"https://docs.google.com/spreadsheets/d/1Dr7c9_2wfoYQNxc67Vus-Rg7iNERS8rhC065zd7p30Q/edit\" style=\"display:inline-block;background:#0b2e59;color:#ffffff;text-decoration:none;font-size:14px;font-weight:bold;padding:11px 20px;border-radius:6px;\">Open Sessions tab</a></p>\n  </td></tr>\n\n  <!-- footer -->\n  <tr><td style=\"background:#f7f8fa;padding:18px 28px;border-top:1px solid #e4e7ec;font-size:11px;line-height:17px;color:#667085;\">\n    Conversation <span style=\"font-family:Menlo,Consolas,monospace;\">{{ $json.conversation_id }}</span><br>\n    ENTIN Bank is a fictional bank. This message contains <b>synthetic demo data only</b> and never includes PINs, OTPs, passwords, CVVs or card numbers.<br>\n    Internal use &middot; ENTIN Customer Operations &middot; Lagos, Nigeria\n  </td></tr>\n</table>\n</td></tr></table>\n</body></html>\n"
+      },
+      "name": "Email QA Alert",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1980,
+        120
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "REPLACE",
+          "name": "ENTIN SMTP"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "ElevenLabs Post-call Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare Signature Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Signature Check": {
+      "main": [
+        [
+          {
+            "node": "HMAC with ElevenLabs Secret",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HMAC with ElevenLabs Secret": {
+      "main": [
+        [
+          {
+            "node": "Check Signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Signature": {
+      "main": [
+        [
+          {
+            "node": "Signature Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Signature Valid?": {
+      "main": [
+        [
+          {
+            "node": "Redact & Summarise",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reject 401",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redact & Summarise": {
+      "main": [
+        [
+          {
+            "node": "Save Call Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Call Summary": {
+      "main": [
+        [
+          {
+            "node": "Respond 200",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond 200": {
+      "main": [
+        [
+          {
+            "node": "Needs QA Alert?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs QA Alert?": {
+      "main": [
+        [
+          {
+            "node": "Email QA Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

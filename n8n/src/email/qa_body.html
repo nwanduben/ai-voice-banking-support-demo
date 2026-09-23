@@ -1,0 +1,16 @@
+  <tr><td style="padding:28px 28px 8px;">
+    <span style="display:inline-block;background:{{ $json.secret_detected === 'yes' ? '#b42318' : '#b54708' }};color:#ffffff;font-size:12px;font-weight:bold;letter-spacing:1px;padding:5px 10px;border-radius:4px;">QUALITY REVIEW NEEDED</span>
+    <h1 style="margin:14px 0 6px;font-size:22px;line-height:28px;color:#0b2e59;">A call needs a quality check</h1>
+    <p style="margin:0;font-size:14px;line-height:22px;color:#475467;">This call finished with something our quality team should review.</p>
+  </td></tr>
+  <tr><td style="padding:16px 28px 4px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e4e7ec;border-radius:8px;font-size:14px;">
+      <tr><td style="padding:10px 14px;width:170px;color:#667085;border-bottom:1px solid #e4e7ec;">Secret spoken on call</td><td style="padding:10px 14px;border-bottom:1px solid #e4e7ec;"><b>{{ $json.secret_detected === 'yes' ? 'Yes, masked before saving' : 'No' }}</b></td></tr>
+      <tr><td style="padding:10px 14px;color:#667085;">Checks that failed</td><td style="padding:10px 14px;">{{ $json.failed_evaluations || 'None' }}</td></tr>
+    </table>
+  </td></tr>
+  <tr><td style="padding:16px 28px 28px;">
+    <div style="font-size:12px;font-weight:bold;letter-spacing:1px;color:#667085;text-transform:uppercase;margin-bottom:6px;">Call summary (redacted)</div>
+    <div style="background:#f4f7fb;border-left:4px solid #0b2e59;border-radius:4px;padding:12px 14px;font-size:14px;line-height:22px;">{{ String($json.call_summary || 'No summary provided.').replace(/</g, '&lt;') }}</div>
+    <p style="margin:18px 0 0;"><a href="__SHEET_URL__" style="display:inline-block;background:#0b2e59;color:#ffffff;text-decoration:none;font-size:14px;font-weight:bold;padding:11px 20px;border-radius:6px;">Open Sessions tab</a></p>
+  </td></tr>

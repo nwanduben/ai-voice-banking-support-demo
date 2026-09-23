@@ -1,0 +1,99 @@
+{
+  "name": "ENTIN W3 - Daily QA digest",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Daily 08:00 WAT",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.ENTIN_API_BASE }}/v1/reports/daily",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "name": "Fetch Daily Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE",
+          "name": "ENTIN API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "entin-demo@example.com",
+        "toEmail": "={{ $env.ENTIN_ALERT_EMAIL }}",
+        "subject": "=ENTIN daily voice-support digest {{ $now.toFormat('yyyy-LL-dd') }}",
+        "emailFormat": "text",
+        "text": "=Calls: {{ $json.calls }}\nBy max risk: {{ JSON.stringify($json.by_risk) }}\nSecrets detected (redacted): {{ $json.secret_detected }}\nHandoffs: {{ $json.handoffs }}\nTickets created: {{ $json.tickets_created }}\nDisputes: {{ $json.disputes }}\nSecurity cases: {{ $json.security_cases }}\nSLA-breached open tickets: {{ $json.sla_breached_open }}",
+        "options": {}
+      },
+      "name": "Email QA Digest",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        440,
+        300
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "REPLACE",
+          "name": "ENTIN SMTP"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Daily 08:00 WAT": {
+      "main": [
+        [
+          {
+            "node": "Fetch Daily Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Daily Report": {
+      "main": [
+        [
+          {
+            "node": "Email QA Digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Africa/Lagos"
+  }
+}

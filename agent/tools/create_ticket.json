@@ -1,0 +1,71 @@
+{
+  "type": "webhook",
+  "name": "create_ticket",
+  "description": "Log a complaint or callback when a tool recommends create_ticket or the caller wants it logged. Summary must not contain secrets.",
+  "response_timeout_secs": 10,
+  "api_schema": {
+    "url": "https://qr4v3tgj.rcld.app/webhook/entin/create_ticket",
+    "method": "POST",
+    "request_headers": {
+      "Authorization": {
+        "secret_id": "REPLACE_WITH_ELEVENLABS_SECRET_ID"
+      }
+    },
+    "request_body_schema": {
+      "type": "object",
+      "properties": {
+        "conversation_id": {
+          "type": "string",
+          "dynamic_variable": "system__conversation_id",
+          "description": "Conversation id (injected)"
+        },
+        "category": {
+          "type": "string",
+          "description": "Intent code",
+          "enum": [
+            "FAQ_GENERAL",
+            "BRANCH_SERVICE_INFO",
+            "TRANSFER_FAILED",
+            "TRANSFER_DEBITED_NOT_RECEIVED",
+            "TRANSACTION_PENDING",
+            "REVERSAL_STATUS",
+            "UNAUTHORIZED_TRANSACTION",
+            "ATM_CASH_DISPUTE",
+            "POS_DISPUTE",
+            "CARD_DECLINED",
+            "CARD_LOST_STOLEN",
+            "MOBILE_LOGIN_ISSUE",
+            "DIGITAL_PROFILE_LOCKED",
+            "CREDENTIAL_RESET_GUIDANCE",
+            "OTP_NOT_RECEIVED",
+            "COMPLAINT_TICKET_STATUS",
+            "ACCOUNT_RESTRICTION",
+            "SUSPECTED_FRAUD_SCAM",
+            "HUMAN_AGENT_REQUEST",
+            "SENSITIVE_INFO_DISCLOSED",
+            "VERIFICATION_FAILED",
+            "PROHIBITED_REQUEST",
+            "OUT_OF_SCOPE_OR_UNCLEAR"
+          ]
+        },
+        "linked_txn_id": {
+          "type": "string",
+          "description": "Related transaction id, if any"
+        },
+        "summary": {
+          "type": "string",
+          "description": "One or two sentence summary, no secrets"
+        },
+        "callback_requested": {
+          "type": "boolean",
+          "description": "Caller wants a call back"
+        }
+      },
+      "required": [
+        "conversation_id",
+        "category",
+        "summary"
+      ]
+    }
+  }
+}

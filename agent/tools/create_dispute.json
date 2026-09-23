@@ -1,0 +1,48 @@
+{
+  "type": "webhook",
+  "name": "create_dispute",
+  "description": "Log a dispute for an ATM no-cash, POS double debit, POS failed-but-debited, or unauthorised transaction.",
+  "response_timeout_secs": 10,
+  "api_schema": {
+    "url": "https://qr4v3tgj.rcld.app/webhook/entin/create_dispute",
+    "method": "POST",
+    "request_headers": {
+      "Authorization": {
+        "secret_id": "REPLACE_WITH_ELEVENLABS_SECRET_ID"
+      }
+    },
+    "request_body_schema": {
+      "type": "object",
+      "properties": {
+        "conversation_id": {
+          "type": "string",
+          "dynamic_variable": "system__conversation_id",
+          "description": "Conversation id (injected)"
+        },
+        "txn_id": {
+          "type": "string",
+          "description": "Transaction id"
+        },
+        "type": {
+          "type": "string",
+          "description": "Dispute type",
+          "enum": [
+            "ATM_NO_CASH",
+            "POS_DOUBLE_DEBIT",
+            "POS_FAILED_DEBITED",
+            "UNAUTHORIZED"
+          ]
+        },
+        "caller_statement": {
+          "type": "string",
+          "description": "What the caller says happened, no secrets"
+        }
+      },
+      "required": [
+        "conversation_id",
+        "txn_id",
+        "type"
+      ]
+    }
+  }
+}

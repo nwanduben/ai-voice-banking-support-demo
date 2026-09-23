@@ -1,0 +1,45 @@
+{
+  "type": "webhook",
+  "name": "verify_caller",
+  "description": "Verify the caller's identity. Ask for full name, date of birth, last four digits of the account number, and last four digits of the registered phone number, one at a time. NEVER ask for PIN, OTP, password, CVV, BVN or full card/account numbers.",
+  "response_timeout_secs": 10,
+  "api_schema": {
+    "url": "https://qr4v3tgj.rcld.app/webhook/entin/verify_caller",
+    "method": "POST",
+    "request_headers": {
+      "Authorization": {
+        "secret_id": "REPLACE_WITH_ELEVENLABS_SECRET_ID"
+      }
+    },
+    "request_body_schema": {
+      "type": "object",
+      "properties": {
+        "conversation_id": {
+          "type": "string",
+          "dynamic_variable": "system__conversation_id",
+          "description": "Conversation id (injected)"
+        },
+        "full_name": {
+          "type": "string",
+          "description": "Caller's full name as spoken"
+        },
+        "date_of_birth": {
+          "type": "string",
+          "description": "Date of birth as YYYY-MM-DD"
+        },
+        "account_last4": {
+          "type": "string",
+          "description": "Last 4 digits of the ENTIN account number"
+        },
+        "phone_last4": {
+          "type": "string",
+          "description": "Last 4 digits of the registered phone number"
+        }
+      },
+      "required": [
+        "conversation_id",
+        "full_name"
+      ]
+    }
+  }
+}
